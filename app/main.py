@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi_docshield import DocShield
 
+from app.core.config import settings
 from app.logger import logger
 
 app = FastAPI(
@@ -13,6 +15,16 @@ app = FastAPI(
     # makes curl show /webservice/...
     servers=[{"url": "/webservice"}],
     )
+
+
+# Add protection to docs with multiple users
+DocShield(
+    app=app,
+    credentials={
+        "admin": settings.DOCSHIELD_ADMIN_PASS,
+        "developer": settings.DOCSHIELD_DEVELOPER_PASS,
+    }
+)
 
 
 @app.get("/")
