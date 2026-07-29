@@ -9,6 +9,7 @@ dependencies = [
     "fastapi-docshield>=0.2.1",
     "geoalchemy2>=0.20.0",
     "loguru>=0.7.3",
+    "psycopg>=3.3.4",
     "pydantic-settings>=2.14.2",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
