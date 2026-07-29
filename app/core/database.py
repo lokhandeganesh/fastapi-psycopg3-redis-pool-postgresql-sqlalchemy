@@ -3,7 +3,7 @@ from collections.abc import AsyncGenerator
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.core.base import Base
+from app.core.base import Base  # noqa: F401
 from app.core.config import settings
 from app.logger import logger
 

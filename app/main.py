@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import engine, get_db  #, init_db
 from app.logger import logger
+from app.routers.user import router as user_router
 
 
 @asynccontextmanager
@@ -47,6 +48,9 @@ app = FastAPI(
     servers=[{"url": "/webservice"}],
     )
 
+
+# Include the created routers 
+app.include_router(user_router)
 
 # Add protection to docs with multiple users
 DocShield(
