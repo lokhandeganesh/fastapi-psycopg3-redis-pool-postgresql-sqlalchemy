@@ -1,13 +1,13 @@
 import uuid
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class UserOut(BaseModel):
     id: uuid.UUID
     email: EmailStr
     # created_at: datetime = current_datetime_local
-
-    class Config:
-        from_attributes = True
+    
+    # Modern Pydantic v2 configuration format
+    model_config = ConfigDict(from_attributes=True)
         

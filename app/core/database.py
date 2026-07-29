@@ -1,5 +1,7 @@
+# import time
 from collections.abc import AsyncGenerator
 
+# from sqlalchemy import event, text
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -56,3 +58,21 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
+
+# # Register time tracking hooks on the engine
+# @event.listens_for(engine.sync_engine, "before_cursor_execute")
+# def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+#     # Store the start timestamp on the execution context object
+#     context._query_start_time = time.perf_counter()
+
+# @event.listens_for(engine.sync_engine, "after_cursor_execute")
+# def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+#     # Calculate total elapsed time
+#     total_time = time.perf_counter() - context._query_start_time
+#     # Format the query statement to keep logs clean (optional)
+#     clean_statement = statement.replace("\n", " ").strip()
+    
+#     # Log execution stats
+#     logger.info(f"DB Query Executed in {total_time:.4f}s | SQL: {clean_statement}")
+    
