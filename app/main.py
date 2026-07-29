@@ -8,7 +8,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import engine, get_db, init_db
+from app.core.database import engine, get_db  #, init_db
 from app.logger import logger
 
 
@@ -23,8 +23,8 @@ async def lifespan(app: FastAPI):
         # uncomment me and related imports to create table in database,
         # only for first time, after that comment me to avoid dropping tables        
         """
-        await init_db()
-        logger.info("Database startup checks completed successfully.")
+        # await init_db()
+        # logger.info("Database startup checks completed successfully.")
     except Exception as e:
         logger.error(f"Database connection failed: {e}")
         raise
