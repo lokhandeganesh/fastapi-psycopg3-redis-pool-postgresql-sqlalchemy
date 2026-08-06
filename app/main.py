@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
             logger.info("Database connection successful")
         """
         # uncomment me and related imports to create table in database,
-        # only for first time, after that comment me to avoid dropping tables        
+        # only for first time, after that comment me to avoid dropping tables
         """
         # await init_db()
         # logger.info("Database startup checks completed successfully.")
@@ -49,7 +49,7 @@ app = FastAPI(
     )
 
 
-# Include the created routers 
+# Include the created routers
 app.include_router(user_router)
 
 # Add protection to docs with multiple users
@@ -64,7 +64,7 @@ DocShield(
 
 @app.get("/")
 def root():
-    logger.info("Hi, Welcome to FastAPI application")    
+    logger.info("Hi, Welcome to FastAPI application")
     return {"message": "Hello World"}
 
 
