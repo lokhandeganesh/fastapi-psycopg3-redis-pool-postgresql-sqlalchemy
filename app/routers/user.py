@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Sqlalchemy imports
@@ -12,6 +13,39 @@ from app.model import models
 from app.schema import schemas
 
 router = APIRouter(prefix="/course_users", tags=['Course Users'])
+
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_course_user(user: schemas.UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+    new_user = models.UserJWT(**user.model_dump())
+
+    # add new_user to session
+    db.add(new_user)
+
+    try:
+        # commit the transaction to the database
+        await db.commit()
+        # refresh the new_user object to get created in the database
+        await db.refresh(new_user)
+
+        logger.info(f"new user added to table with user-id: {new_user.id}")
+        return new_user
+
+    except IntegrityError as e:
+        await db.rollback()
+        logger.error(f"IntegrityError: {e.orig}")
+
+        if "users_email_key" in str(e.orig):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with this email already exists"
+            )
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not create user due to data constraint"
+        )
+
 
 @router.get("/{id}", response_model=schemas.UserOut)
 async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get_db)]):
@@ -24,12 +58,12 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
     #  Alternative approach using column targeting + mappings()
     stmt = select(models.UserJWT.id, models.UserJWT.email).where(models.UserJWT.id == id)
     result = await db.execute(stmt)
-    
+
     # .mappings() transforms your selected columns into a dict format
     user = result.mappings().one_or_none()
 
     if not user:
-        logger.error(f"user not for user-id:{id}")
+        logger.error(f"user not found for user-id:{id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with id:{id} does not exist."
