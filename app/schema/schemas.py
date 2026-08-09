@@ -17,3 +17,7 @@ class UserOut(BaseModel):
 
     # Modern Pydantic v2 configuration format
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserInfoUpdate(BaseModel):
+    phone_number: str

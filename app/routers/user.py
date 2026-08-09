@@ -2,7 +2,7 @@ import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,7 @@ from app.schema import schemas
 router = APIRouter(prefix="/course_users", tags=['Course Users'])
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
 async def create_course_user(user: schemas.UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     new_user = models.UserJWT(**user.model_dump())
 
@@ -70,4 +70,41 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
         )
 
     logger.info(f"user information retrieved for user-id:{id}")
+    return user
+
+
+@router.put("/{id}", response_model=schemas.UserOut)
+async def update_user_info(id: uuid.UUID, user_info: schemas.UserInfoUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
+    # Update the user information
+    update_data = user_info.model_dump(exclude_unset=True)
+
+    # query to update user by id
+    stmt = (
+        update(models.UserJWT)
+        .where(models.UserJWT.id == id)
+        .values(**update_data)
+        .returning(models.UserJWT)  # Tells postgres/sqlite to return the modified row
+        )
+
+    # Execute the update
+    result = await db.execute(stmt)
+
+    # retrive the user for updating
+    user = result.scalar_one_or_none()
+
+    if not user:
+        logger.error(f"user not found for user-id:{id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id:{id} does not exist."
+        )
+
+    # commit the changes to the  database
+    await db.commit()
+
+    # Optional: refresh the object to ensure it has the latest DB state (e.g., updated_at triggers)
+    await db.refresh(user)
+
+    logger.info(f"User information updated for user-id: {id}")
+
     return user
