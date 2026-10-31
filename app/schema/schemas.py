@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     # phone_number: Optional[str] = None
     phone_number: str | None = None
-    password: str
+    secret: str
 
 class UserOut(BaseModel):
     id: uuid.UUID
