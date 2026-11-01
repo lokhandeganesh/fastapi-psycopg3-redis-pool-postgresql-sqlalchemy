@@ -11,15 +11,19 @@ from app.core.database import get_db
 from app.logger import logger
 from app.model import models
 from app.schema import schemas
+from app.security import oauth2
 
 # Implementing Argon2 password hashing
 from app.util import utils
 
-router = APIRouter(prefix="/course_users", tags=["Course Users"])
+router = APIRouter(prefix="/users", tags=["Users"])
+
+# using Annotated to define a type alias for the database session dependency
+DbSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-async def create_course_user(
+async def create_user(
     user: schemas.UserCreate, db: Annotated[AsyncSession, Depends(get_db)]
 ):
 
@@ -59,7 +63,7 @@ async def create_course_user(
 
 
 @router.get("/{id}", response_model=schemas.UserOut)
-async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get_db)]):
+async def get_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get_db)]):
     # Fetch User
 
     # stmt = select(models.UserJWT).where(models.UserJWT.id == id)
@@ -86,12 +90,26 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
     return user
 
 
+# @router.put("/{id}", response_model=schemas.UserOut)
 @router.put("/{id}", response_model=schemas.UserOut)
 async def update_user_info(
     id: uuid.UUID,
     user_info: schemas.UserInfoUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: DbSession,
+    users_data: Annotated[str, Depends(oauth2.get_current_user)],
 ):
+    # we can access user data from token_data
+    # print(users_data)
+
+    # Use the user ID from the token data for updating
+    # id = users_data.id
+    if id != users_data.id:
+        logger.error(f"user not authorized to update user-id:{id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"User not authorized to update user-id:{id}",
+        )
+
     # Update the user information
     update_data = user_info.model_dump(exclude_unset=True)
 

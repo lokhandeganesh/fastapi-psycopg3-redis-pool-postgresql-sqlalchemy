@@ -12,6 +12,7 @@ from app.core.database import engine, get_db  # , init_db
 
 # from app.core.redis import RedisManager
 from app.logger import logger
+from app.routers import auth
 from app.routers.user import router as user_router
 
 
@@ -60,6 +61,7 @@ app = FastAPI(
 
 # Include the created routers
 app.include_router(user_router)
+app.include_router(auth.router)
 
 # Add protection to docs with multiple users
 DocShield(

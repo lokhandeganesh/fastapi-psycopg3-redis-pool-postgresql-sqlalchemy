@@ -10,11 +10,7 @@ from jwt import PyJWTError
 from app.core.config import settings
 from app.schema import schemas
 
-SECRET_KEY = settings.secret_key
-ALGORITHM = settings.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="course_auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 # Define the IST timezone
 IST_TZ = ZoneInfo("Asia/Kolkata")
@@ -26,13 +22,17 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     # Set the expiration time in IST timezone
-    expire = datetime.now(tz=IST_TZ) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(tz=IST_TZ) + timedelta(
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
 
     # Add the expiration time to the payload
     to_encode.update({"exp": expire})
 
     # Encode the JWT token
-    encoded_jwt = jwt.encode(payload=to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        payload=to_encode, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
 
     return encoded_jwt
 
@@ -41,7 +41,9 @@ def create_access_token(data: dict):
 def verify_access_token(token: str, credentials_exceptions):
     try:
         # Decode the JWT token
-        payload = jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            jwt=token, key=settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
 
         # Extract the user_id from the payload
         user_id: uuid.UUID = payload.get("sub")

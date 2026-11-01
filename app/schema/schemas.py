@@ -10,6 +10,7 @@ class UserCreate(BaseModel):
     phone_number: str | None = None
     secret: str
 
+
 class UserOut(BaseModel):
     id: uuid.UUID
     email: EmailStr
@@ -21,3 +22,17 @@ class UserOut(BaseModel):
 
 class UserInfoUpdate(BaseModel):
     phone_number: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    id: uuid.UUID | None = None

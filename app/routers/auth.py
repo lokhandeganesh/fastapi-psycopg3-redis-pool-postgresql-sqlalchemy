@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -13,14 +14,14 @@ from app.security import oauth2
 # Implementing Argon2 password hashing
 from app.util import utils
 
-router = APIRouter(prefix="/course_auth", tags=["Course Authentication"])
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 # (Authentication routes can be added here in the future)
 @router.post("/login", response_model=schemas.Token)
-async def course_login(
+async def login(
     db: Annotated[AsyncSession, Depends(get_db)],
-    user_credentials: OAuth2PasswordRequestForm = Depends(),
+    user_credentials: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     # then request form will return data in the form of
     #  {
@@ -29,11 +30,15 @@ async def course_login(
     #  }
 
     # query the database to find user by email
-    user = (
-        db.query(models.UserJWT)
-        .filter(models.UserJWT.email == user_credentials.username)
-        .first()
+    stmt = select(models.UserJWT).where(
+        models.UserJWT.email == user_credentials.username
     )
+
+    # Execute the query and fetch the user from the database
+    result = await db.execute(stmt)
+
+    # retrive the user
+    user = result.scalar_one_or_none()
 
     if not user:
         logger.warning(f"User Account does not exist: {user_credentials.username}")

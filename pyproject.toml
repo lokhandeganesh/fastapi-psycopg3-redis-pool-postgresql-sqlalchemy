@@ -10,11 +10,12 @@ dependencies = [
     "fastapi>=0.140.7",
     "fastapi-docshield>=0.2.1",
     "geoalchemy2>=0.20.0",
-    "jwt>=1.4.0",
     "loguru>=0.7.3",
     "psycopg>=3.3.4",
     "pydantic-settings>=2.14.2",
     "pydantic[email]>=2.13.4",
+    "pyjwt>=2.15.1",
+    "python-multipart>=0.0.33",
     "sqlalchemy>=2.0.51",
     "uvicorn>=0.51.0",
 ]
