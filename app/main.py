@@ -1,14 +1,16 @@
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI  #, HTTPException, status
+from fastapi import Depends, FastAPI  # , HTTPException, status
 from fastapi.responses import FileResponse
 from fastapi_docshield import DocShield
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import engine, get_db  #, init_db
+from app.core.database import engine, get_db  # , init_db
+
+# from app.core.redis import RedisManager
 from app.logger import logger
 from app.routers.user import router as user_router
 
@@ -17,6 +19,9 @@ from app.routers.user import router as user_router
 async def lifespan(app: FastAPI):
     # Test connection on startup
     try:
+        # # Startup
+        # RedisManager.get_pool()
+
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1;"))
             logger.info("Database connection successful")
@@ -32,6 +37,10 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    # # Shutdown
+    # if RedisManager.pool:
+    #     await RedisManager.pool.disconnect()
+
     # Clean up connection pool on shutdown
     await engine.dispose()
     logger.info("Database connection pool closed")
@@ -46,7 +55,7 @@ app = FastAPI(
     openapi_url="/webservice/openapi.json",
     # makes curl show /webservice/...
     servers=[{"url": "/webservice"}],
-    )
+)
 
 
 # Include the created routers
@@ -58,7 +67,7 @@ DocShield(
     credentials={
         "admin": settings.DOCSHIELD_ADMIN_PASS,
         "developer": settings.DOCSHIELD_DEVELOPER_PASS,
-    }
+    },
 )
 
 
@@ -84,7 +93,7 @@ async def db_health_check(db: Annotated[AsyncSession, Depends(get_db)]):
     try:
         stmt = select(
             func.current_database().label("database"),
-            func.version().label("database_version")
+            func.version().label("database_version"),
         )
 
         result = await db.execute(stmt)
@@ -94,7 +103,7 @@ async def db_health_check(db: Annotated[AsyncSession, Depends(get_db)]):
         return {
             "status": "online",
             "database": db_info["database"],
-            "postgres_version": db_info["database_version"]
+            "postgres_version": db_info["database_version"],
         }
 
         # result = await db.execute(text("SELECT current_database(), version();"))

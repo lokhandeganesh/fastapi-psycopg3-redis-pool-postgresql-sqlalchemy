@@ -11,11 +11,11 @@ class Settings(BaseSettings):
     DATABASE_USERNAME: str
 
     # # JWT Settings
-    # SECRET_KEY: str
-    # ALGORITHM: str
-    # ACCESS_TOKEN_EXPIRE_MINUTES: int
-    # REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    # PRE_AUTH_TOKEN_EXPIRE_MINUTES: int = 5  # Temporary token for 2FA step
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    PRE_AUTH_TOKEN_EXPIRE_MINUTES: int = 5  # Temporary token for 2FA step
 
     # # 2FA / TOTP Security
     # TOTP_ENCRYPTION_KEY: str  # Used to encrypt stored Base32 OTP secrets
@@ -34,7 +34,8 @@ class Settings(BaseSettings):
         env_file=".env",
         # Optional: Instead of adding fields,
         # you can tell Pydantic to ignore extras
-        extra="ignore")
+        extra="ignore",
+    )
 
     @computed_field
     @property

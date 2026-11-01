@@ -20,8 +20,9 @@ engine = create_async_engine(
     max_overflow=10,  # Additional temporary connections during high load spikes
     pool_timeout=30,  # Seconds to wait for an available connection before timing out
     pool_recycle=1800,  # Recycle connections every 30 minutes to drop stale sockets
-    pool_pre_ping=True  # Validate connections health before handing it out from pool
-    )
+    pool_pre_ping=True,  # Validate connections health before handing it out from pool
+)
+
 
 #  async code into a function to be called at startup
 async def init_db() -> None:
@@ -47,7 +48,7 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,  # Prevents automatic expiration of objects after commit
     autocommit=False,  # Explicitly control when to commit transactions
-    autoflush=False  # Avoids automatic flushes to the database, giving you control
+    autoflush=False,  # Avoids automatic flushes to the database, giving you control
 )
 
 
@@ -72,7 +73,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 #     total_time = time.perf_counter() - context._query_start_time
 #     # Format the query statement to keep logs clean (optional)
 #     clean_statement = statement.replace("\n", " ").strip()
-    
+
 #     # Log execution stats
 #     logger.info(f"DB Query Executed in {total_time:.4f}s | SQL: {clean_statement}")
-    

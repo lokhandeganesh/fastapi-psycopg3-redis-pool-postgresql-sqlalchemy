@@ -12,11 +12,22 @@ from app.logger import logger
 from app.model import models
 from app.schema import schemas
 
-router = APIRouter(prefix="/course_users", tags=['Course Users'])
+# Implementing Argon2 password hashing
+from app.util import utils
+
+router = APIRouter(prefix="/course_users", tags=["Course Users"])
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserOut)
-async def create_course_user(user: schemas.UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def create_course_user(
+    user: schemas.UserCreate, db: Annotated[AsyncSession, Depends(get_db)]
+):
+
+    # hash the password - user.password
+    hashed_password = utils.hash_password(user.secret)
+    # update the user.password with hashed password
+    user.secret = hashed_password
+
     new_user = models.UserJWT(**user.model_dump())
 
     # add new_user to session
@@ -38,13 +49,13 @@ async def create_course_user(user: schemas.UserCreate, db: Annotated[AsyncSessio
         if "users_email_key" in str(e.orig):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="User with this email already exists"
-            )
+                detail="User with this email already exists",
+            ) from e
 
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Could not create user due to data constraint"
-        )
+            detail="Could not create user due to data constraint",
+        ) from e
 
 
 @router.get("/{id}", response_model=schemas.UserOut)
@@ -56,7 +67,9 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
     # user = result.scalar_one_or_none()
 
     #  Alternative approach using column targeting + mappings()
-    stmt = select(models.UserJWT.id, models.UserJWT.email).where(models.UserJWT.id == id)
+    stmt = select(models.UserJWT.id, models.UserJWT.email).where(
+        models.UserJWT.id == id
+    )
     result = await db.execute(stmt)
 
     # .mappings() transforms your selected columns into a dict format
@@ -66,7 +79,7 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
         logger.error(f"user not found for user-id:{id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id:{id} does not exist."
+            detail=f"User with id:{id} does not exist.",
         )
 
     logger.info(f"user information retrieved for user-id:{id}")
@@ -74,7 +87,11 @@ async def get_course_user(id: uuid.UUID, db: Annotated[AsyncSession, Depends(get
 
 
 @router.put("/{id}", response_model=schemas.UserOut)
-async def update_user_info(id: uuid.UUID, user_info: schemas.UserInfoUpdate, db: Annotated[AsyncSession, Depends(get_db)]):
+async def update_user_info(
+    id: uuid.UUID,
+    user_info: schemas.UserInfoUpdate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
     # Update the user information
     update_data = user_info.model_dump(exclude_unset=True)
 
@@ -84,7 +101,7 @@ async def update_user_info(id: uuid.UUID, user_info: schemas.UserInfoUpdate, db:
         .where(models.UserJWT.id == id)
         .values(**update_data)
         .returning(models.UserJWT)  # Tells postgres/sqlite to return the modified row
-        )
+    )
 
     # Execute the update
     result = await db.execute(stmt)
@@ -96,13 +113,14 @@ async def update_user_info(id: uuid.UUID, user_info: schemas.UserInfoUpdate, db:
         logger.error(f"user not found for user-id:{id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id:{id} does not exist."
+            detail=f"User with id:{id} does not exist.",
         )
 
     # commit the changes to the  database
     await db.commit()
 
-    # Optional: refresh the object to ensure it has the latest DB state (e.g., updated_at triggers)
+    # Optional: refresh the object to ensure it has the latest DB state
+    # (e.g., updated_at triggers)
     await db.refresh(user)
 
     logger.info(f"User information updated for user-id: {id}")
